@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  php:
+    build:
+      context: ./dockerfile
+      dockerfile: DockerFile-php-v2
+    container_name: php
+    hostname: php
+    ports:
+      - "8080:80"
+    volumes:
+      - ./webserver/www:/var/www/html/
+    networks:
+      - dev-net
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+    working_dir: /var/www/html
+    mem_limit: 2048m
+    cpus: 1.0
+    depends_on:
+      - percona_mysql
+    # deploy:
+    #   resources:
+    #     limits:
+    #       # cpus: "0.1"
+    #       # cpus: "1.0"
+    #       # memory: "512M"
+    #       memory: "2048M"
+
+  percona_mysql:
+    platform: linux/x86_64
+    image: percona
+    container_name: percona_mysql
+    hostname: percona_mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../docker-storage/redis/data/master:/data:rw
+    networks:
+      - dev-net
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=user
+    mem_limit: 256m
+    cpus: 0.1
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "0.1"
+    #       memory: "256M"
+
+  # redis-master:
+  #   build:
+  #     context: ./dockerfile
+  #     dockerfile: dockerfile-redis-master
+  #   container_name: redis-master
+  #   hostname: redis-master
+  #   ports:
+  #     - "6379:6379"
+  #   environment:
+  #     # - REDIS_PASSWORD=masukaja
+  #     - REDIS_PORT=6379
+  #     - REDIS_IP_BIND=0.0.0.0
+  #     - REDIS_LOGLEVEL=debug
+  #     - REDIS_PATH_PID=/var/run/redis/redis.pid
+  #     # - REDIS_LOG_PATH=/var/log/redis/redis.log
+  #   volumes:
+  #     - ../docker-storage/redis/data/master:/data:rw
+  #   networks:
+  #     - redis-net
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.1"
+  #         memory: "256M"
+
+  # redis-slave1:
+  #   build:
+  #     context: ./dockerfile
+  #     dockerfile: dockerfile-redis-slave
+  #   container_name: redis-slave1
+  #   hostname: redis-slave1
+  #   environment:
+  #     # - REDIS_PASSWORD=masukaja
+  #     # - REDIS_MASTER_PASSWORD=masukaja
+  #     - REDIS_PORT=6379
+  #     - REDIS_IP_BIND=0.0.0.0
+  #     - REDIS_MASTER_HOST=redis-master
+  #     - REDIS_MASTER_PORT=6379
+  #     - REDIS_LOGLEVEL=debug
+  #     - REDIS_PATH_PID=/var/run/redis/redis.pid
+  #     # - REDIS_LOG_PATH=/var/log/redis/redis.log
+  #   volumes:
+  #     - ../docker-storage/redis/data/slave1:/data:rw
+  #   networks:
+  #     - redis-net
+  #   depends_on:
+  #     - redis-master
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.1"
+  #         memory: "256M"
+
+  # redis-sentinel1:
+  #   build:
+  #     context: ./dockerfile
+  #     dockerfile: dockerfile-redis-sentinel
+  #   container_name: redis-sentinel1
+  #   hostname: redis-sentinel1
+  #   ports:
+  #     - "26379:26379"
+  #   environment:
+  #     # - REDIS_PASSWORD=masukaja
+  #     - REDIS_SERVICE_NAME=mymaster
+  #     # - REDIS_MASTER_HOST=redis-master
+  #     - REDIS_MASTER_HOST=172.21.0.2
+  #     - REDIS_MASTER_PORT=6379
+  #     - SENTINEL_PORT=26379
+  #     - SENTINEL_IP_BIND=0.0.0.0
+  #     - SENTINEL_REPLICAS=1
+  #     - SENTINEL_DOWN_AFTER=5000
+  #     - SENTINEL_FAILOVER_TIMEOUT=10000
+  #     - SENTINEL_LOGLEVEL=debug
+  #     - SENTINEL_PATH_PID=/var/run/redis/sentinel.pid
+  #     # - SENTINEL_PATH_LOG=/var/log/redis/sentinel.log
+  #   networks:
+  #     - redis-net
+  #   depends_on:
+  #     - redis-master
+
+  # redis-sentinel2:
+  #   image: redis:latest
+  #   container_name: redis-sentinel2
+  #   networks:
+  #     - dev-net
+  #   depends_on:
+  #     - redis-master
+  #   volumes:
+  #     - ../docker-storage/redis/sentinel/sentinel2.conf:/etc/redis/sentinel.conf
+  #   command: redis-sentinel /etc/redis/sentinel.conf
+
+  # redis-sentinel3:
+  #   image: redis:latest
+  #   container_name: redis-sentinel3
+  #   networks:
+  #     - dev-net
+  #   depends_on:
+  #     - redis-master
+  #   volumes:
+  #     - ../docker-storage/redis/sentinel/sentinel3.conf:/etc/redis/sentinel.conf
+  #   command: redis-sentinel /etc/redis/sentinel.conf
+
+networks:
+  redis-net:
+    driver: bridge
+  dev-net:
+    driver: bridge

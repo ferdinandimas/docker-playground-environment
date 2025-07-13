@@ -1,0 +1,21 @@
+FROM redis:latest
+
+RUN apt-get update && \
+    apt-get install -y gettext
+
+RUN mkdir -p /var/run/redis && \
+    mkdir -p /var/log/redis && \
+    mkdir -p /etc/redis
+
+RUN touch /var/run/redis/sentinel.pid && \
+    touch /var/log/redis/sentinel.log
+
+RUN echo "#!/bin/bash" > /etc/redis/start-sentinel.sh && \
+    echo "envsubst < /etc/redis/sentinel.conf.template > /etc/redis/sentinel.conf" >> /etc/redis/start-sentinel.sh && \
+    echo "redis-sentinel /etc/redis/sentinel.conf" >> /etc/redis/start-sentinel.sh && \
+    sed -i 's/\r//' /etc/redis/start-sentinel.sh && \
+    chmod +x /etc/redis/start-sentinel.sh
+
+COPY ./template/redis-sentinel-template.conf /etc/redis/sentinel.conf.template
+
+ENTRYPOINT sh /etc/redis/start-sentinel.sh

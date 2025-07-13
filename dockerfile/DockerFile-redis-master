@@ -1,0 +1,21 @@
+FROM redis:latest
+
+RUN apt-get update && \
+    apt-get install -y gettext
+
+RUN mkdir -p /var/run/redis && \
+    mkdir -p /var/log/redis && \
+    mkdir -p /etc/redis
+
+RUN touch /var/run/redis/redis.pid && \
+    touch /var/log/redis/redis.log
+
+RUN echo "#!/bin/bash" > /etc/redis/start-redis.sh && \
+    echo "envsubst < /etc/redis/redis.conf.template > /etc/redis/redis.conf" >> /etc/redis/start-redis.sh && \
+    echo "redis-server /etc/redis/redis.conf" >> /etc/redis/start-redis.sh && \
+    sed -i 's/\r//' /etc/redis/start-redis.sh && \
+    chmod +x /etc/redis/start-redis.sh
+
+COPY ./template/redis-master-template.conf /etc/redis/redis.conf.template
+
+ENTRYPOINT sh /etc/redis/start-redis.sh
