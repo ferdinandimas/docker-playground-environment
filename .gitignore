@@ -1,3 +1,3 @@
 /.tmp.drive*
-/webser/www/*
-!/webser/www/.gitkeep
+/webserver/www/*
+!/webserver/www/.gitkeep
